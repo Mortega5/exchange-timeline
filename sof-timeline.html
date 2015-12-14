@@ -34,7 +34,7 @@ Example:
     <style is="custom-style">
       :host {
         display: block;
-        width: var(--google-timeline-width, 350px);
+        width: var(--google-timeline-width, 650px);
         height: var(--google-timeline-height, 400px);
         font-family: var(--google-timeline-font-family, Roboto)
       }
@@ -115,6 +115,9 @@ Example:
       p {
         margin:auto;
       }
+    /* No funcionan las medias queries porque no se aplican sobre el host sino sobre toda la pantalla
+     * utilizar toggleClass(nombreClase, booleano, [nodo]) para modificar en funcion del tamaño
+     */
       @media screen (max-width: 500px){
         .votes, .views, .time > p > span{
           display: none !important;
@@ -159,7 +162,7 @@ Example:
             <div class="postInfo vertical layout flex">
               <!-- TITLE -->
               <div class="title flex">
-                <a href="item.link" target="_blank" class="link">{{_decode_utf8(item.title)}}</a>
+                <a href="{{item.link}}" target="_blank" class="link">{{_decode_utf8(item.title)}}</a>
               </div>
               <!-- TAGS AND TIME -->
               <div class="additionalInfo horizontal layout">
@@ -170,7 +173,7 @@ Example:
                 </div>
                 <div class="time">
                   <p><span>answered</span> {{_timeSince(item.creation_date)}}
-                    <a href="item.owner.link" class="link" target="_blank"> {{_decode_utf8(item.owner.display_name)}}</a >
+                    <a href="{{item.owner.link}}" class="link" target="_blank"> {{_decode_utf8(item.owner.display_name)}}</a >
                   </p>
                 </div>
               </div>
@@ -306,7 +309,7 @@ Example:
       return str_data;
     },
     /**
-      * TO
+      * TODO
       *
       */
     _timeSince: function(timestamp){
