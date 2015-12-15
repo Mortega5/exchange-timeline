@@ -15,6 +15,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../paper-material/paper-material.html">
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
 
 
 <!--
@@ -35,9 +36,9 @@ Example:
     <style is="custom-style">
       :host {
         display: block;
-        width: var(--google-timeline-width, 650px);
-        height: var(--google-timeline-height, 400px);
-        font-family: var(--google-timeline-font-family, Roboto)
+        width: var(--sof-timeline-width, 650px);
+        height: var(--sof-timeline-height, 400px);
+        font-family: var(--sof-timeline-font-family, Roboto)
       }
       #panel{
         box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
@@ -45,16 +46,16 @@ Example:
         border-radius: 2px;
       }
       #panel .paper-header {
-        background-color: var(--paper-brown-800);
+        background-color: var(--sof-timeline-header-color, --paper-brown-800);
         color: white;
         padding:5px 8px;
-        @apply(--google-timeline-header)
+        @apply(--sof-timeline-header)
           }
       #panel .paper-header .title{
         background: url('http://sstatic.net/stackexchange/img/logos/se/se-logo.png?v=dd7153fcc7fa') no-repeat;
         background-size: contain;
-        height: var(--google-timeline-title-height, 45px);
-        width: var(--google-timeline-title-width, 200px);
+        height: var(--sof-timeline-title-height, 45px);
+        width: var(--sof-timeline-title-width, 200px);
         margin:auto 0px;
       }
       #panel .paper-header .searchBar {
@@ -65,8 +66,8 @@ Example:
         }
       }
       paper-icon-button[suffix] {
-          width: 35px;
-          height: 35px;
+        width: 35px;
+        height: 35px;
       }
       #panel .content {
         margin:15px 8px;
@@ -136,11 +137,18 @@ Example:
           display: none !important;
         }
       }
-
+      paper-tabs{
+        height: 40px;
+        font-size: 12px;
+        --paper-tabs-selection-bar-color: var(--paper-orange-700);
+      }
+      paper-tab {
+        --paper-tab-ink: var(--paper-blue-700);
+      }
     </style>
 
     <iron-ajax
-               url="https://api.stackexchange.com/2.2/questions"
+               url="{{_requestEventsUrl}}"
                params="{{_requestEventsParams}}"
                handle-as="json"
                on-response="_handlerRequestEvent"
@@ -150,11 +158,15 @@ Example:
     <paper-header-panel id="panel" mode="waterfall" class="blue">
       <div class="paper-header horizontal layout">
         <div class="title"></div>
-        <paper-input label="search tags" class="flex searchBar" id="searchBar" no-label-float value="{{searchBy::bind-value-changed}}" on-keyup="_searchBy">
-          <paper-icon-button icon="search" on-click="_searchBy" suffix></paper-icon-button>
-        </paper-input>
         <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>
       </div>
+      <paper-tabs selected="{{tabSelected}}">
+        <paper-tab>Last Questions</paper-tab>
+        <paper-tab>Your Questions</paper-tab>
+      </paper-tabs>
+      <paper-input label="search tags" class="flex searchBar" id="searchBar" no-label-float value="{{searchBy::bind-value-changed}}" on-keyup="_searchBy">
+        <paper-icon-button icon="search" on-click="_searchBy" suffix></paper-icon-button>
+      </paper-input>
       <!-- CONTENT INFO-->
       <template is="dom-repeat" items="{{events}}">
         <paper-material elevation=1 class="content">
@@ -233,6 +245,10 @@ Example:
         type:String,
         reflectToAttribute: true
       },
+      _requestEventsUrl: {
+        type: String,
+        computed: "_composeRequestUrl(tabSelected)"
+      },
       /**
         * `_requestEventsParams` TODO
         */
@@ -244,7 +260,11 @@ Example:
         type: String,
         value: ""
       },
-
+      tabSelected: {
+        type: Number,
+        value: 0,
+        observer: "_requestNewContent" 
+      },
       /**
        * Describes the author of the element, but is really just an excuse to
        * show off JSDoc annotations.
@@ -302,25 +322,35 @@ Example:
     _composeRequestParams: function(access_token, key, site, searchBy) {
       return {access_token: access_token, key: key, site: site, tagged: searchBy.replace(" ", ";"), sort:"activity", order:"desc"};
     },
+
+    _composeRequestUrl: function(selected) {
+      return selected == 0 ? "https://api.stackexchange.com/2.2/questions": "https://api.stackexchange.com/2.2/me/questions"
+    },
     _searchBy: function(event){
       if (event.type === "keyup" && event.which === 13 || event.type === "click") {
         this.$.requestEvent.generateRequest();
       }
-      
+
     },
+    _requestNewContent: function(newValue, oldValue){
+      if (oldValue !== undefined) {
+        this.$.requestEvent.generateRequest();
+      }
+    },
+
+
     /**
       * Decode html encode to utf8 string
       *
       * @param {string} str_data The string with html encode characters
       * @return {string} String codify as utf-8
       */
-
     _decode_utf8: function(str_data) {
+      str_data = str_data.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
       var matched = str_data.match(/&#([0-9]*);/);
       while(matched) {
         str_data = str_data.replace(/&#[\d]*;/, String.fromCharCode(matched[1]))
         matched = str_data.match(/&#([0-9]*);/);
-        str_data = str_data.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
       }
       return str_data;
     },
