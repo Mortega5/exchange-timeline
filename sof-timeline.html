@@ -16,6 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../paper-material/paper-material.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../paper-button/paper-button.html">
 
 
 <!--
@@ -150,6 +151,14 @@ Example:
       paper-tab {
         --paper-tab-ink: var(--paper-blue-700);
       }
+      .loadmore paper-material{
+        margin-bottom: 15px;
+        background-color: var(--paper-brown-300);
+      }
+      .loadmore paper-material:hover {
+        background-color: var(--paper-brown-400);
+
+      }
     </style>
 
     <iron-ajax
@@ -159,6 +168,20 @@ Example:
                on-response="_handlerRequestEvent"
                id="requestEvent">
 
+    </iron-ajax>
+    <iron-ajax url="{{_requestEventsUrl}}"
+               params="{{_requestRefreshParams}}"
+               handle-as="json"
+               on-response="_handlerRefreshEvent"
+               id="refreshEvent"
+               >
+    </iron-ajax>
+    <iron-ajax url="{{_requestEventsUrl}}"
+               params="{{_requestLoadmoreParams}}"
+               handle-as="json"
+               on-response="_handlerLoadmoreEvent"
+               id="loadmoreEvent"
+               >
     </iron-ajax>
     <paper-header-panel id="panel" mode="waterfall" class="blue">
       <div class="paper-header horizontal layout">
@@ -206,7 +229,7 @@ Example:
                   </template>
                 </div>
                 <div class="time">
-                  <p><span>answered</span> {{_timeSince(item.last_activity_date)}}
+                  <p>{{item.date}}
                     <a href="{{item.owner.link}}" class="link" target="_blank"> {{_decode_utf8(item.owner.display_name)}}</a >
                   </p>
                 </div>
@@ -216,12 +239,20 @@ Example:
         </paper-material>
       </template>
       <template is="dom-if" if="{{_checkArraySize(events, 0)}}">
-        <paper-material elevation=1 class="content">
+        <paper-material elevation=1 class="content loadmore">
           <div class="post vertical layout">
             <p>Opss!! There are not results for <b>{{not_found}}</b> tag[s].</p> 
             <p>Try it with other[s]</p>
           </div>
         </paper-material>
+      </template>
+      <!-- Show more button -->
+      <template is="dom-if" if="{{has_more}}">
+        <div class="horizontal center-justified layout loadmore">
+          <paper-material elevation="2">
+            <paper-button on-click="loadmore">Load More</paper-button>
+          </paper-material>
+        </div>
       </template>
     </paper-header-panel>
   </template>
@@ -262,12 +293,21 @@ Example:
         type: String,
         computed: "_composeRequestUrl(tabSelected)"
       },
+
       /**
         * `_requestEventsParams` TODO
         */
       _requestEventsParams: {
-        type: String,
+        type: Object,
         computed: "_composeRequestParams(access_token, key, site, searchBy)"
+      },
+      _requestRefreshParams: {
+        type: Object,
+        computed: "_composeRefreshParams(access_token, key, site, searchBy, first_request)"
+      },
+      _requestLoadmoreParams: {
+        type: Object,
+        computed: "_composeLoadmoreParams(access_token, key, site, searchBy, first_request)"
       },
       searchBy: {
         type: String,
@@ -323,11 +363,34 @@ Example:
     _handlerRequestEvent: function(event, detail){
       this.fire("sof-timeline-eventsReady", detail);
       this.events = detail.response.items;
+      this.has_more = detail.response.has_more;
+      this.first_request = detail.response.items[0].last_activity_date;
+      this.last_request = detail.response.items[detail.response.items.length - 1].last_activity_date;
       if (this.events.length === 0) {
         this.not_found = this.searchBy;
       }
+      this._changeTime();
     },
-
+    refresh: function(){
+      this.$.refreshEvent.generateRequest();
+    },
+    loadmore: function(){
+      this.$.loadmoreEvent.generateRequest();
+    },
+    _handlerRefreshEvent: function(event, detail) {
+      this.first_request = detail.response.items[0].last_activity_date;
+      for (var i = detail.response.items.length - 1; i >= 0;i--) {
+        this.unshift('events', detail.response.items[i]);
+      }
+      this._changeTime();
+    },
+    _handlerLoadmoreEvent: function(event, detail) {
+      this.last_request = detail.response.items[0].last_activity_date;
+      for (var i = 0; i < detail.response.items.length;i++) {
+        this.push('events', detail.response.items[i]);
+      }
+      this._changeTime();
+    },
     /**
       * TODO Breaf description of `_componseRequestParam`
       * @param {string} access_token The user access token provide as parameter
@@ -336,14 +399,38 @@ Example:
       * @return {object} {access_token:"value", key: "value", site: "value"}
       */
     _composeRequestParams: function(access_token, key, site, searchBy) {
-      return {access_token: access_token, key: key, site: site, tagged: searchBy.replace(/\s/g, ";"), sort:"activity", order:"desc"};
-    },
+      var params = {access_token: access_token, key: key, site: site,
+                    sort:"activity", order:"desc"};
+      if (searchBy){
+        params.tagged =searchBy.replace(/\s/g, ";");
+      }
+      return params;    },
     /**
       * TODO `_composeRequestUrl`
       */
     _composeRequestUrl: function(selected) {
       return selected == 0 ? "https://api.stackexchange.com/2.2/questions": "https://api.stackexchange.com/2.2/me/questions"
     },
+
+    _composeRefreshParams: function(access_token, key, site, searchBy, first_request){
+      var params = {access_token: access_token, key: key, site: site,
+                    sort:"activity", order:"desc",
+                    fromdate: first_request, todate: Math.ceil(new Date().getTime()/1000), pagesize:100};
+      if (searchBy){
+        params.tagged = searchBy.replace(/\s/g, ";");
+      }
+      return params;
+    },
+    _composeLoadmoreParams: function(access_token, key, site, searchBy, last_request){
+      var params = {access_token: access_token, key: key, site: site,
+                    sort:"activity", order:"desc",
+                    max: last_request};
+      if (searchBy){
+        params.tagged = searchBy.replace(/\s/g, ";");
+      }
+      return params;
+    },
+
     /**
       * TODO `_searchBy`
       */
@@ -388,11 +475,13 @@ Example:
       * @return {string} String codify as utf-8
       */
     _decode_utf8: function(str_data) {
-      str_data = str_data.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
-      var matched = str_data.match(/&#([0-9]*);/);
-      while(matched) {
-        str_data = str_data.replace(/&#[\d]*;/, String.fromCharCode(matched[1]))
-        matched = str_data.match(/&#([0-9]*);/);
+      if (str_data){ 
+        str_data = str_data.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+        var matched = str_data.match(/&#([0-9]*);/);
+        while(matched) {
+          str_data = str_data.replace(/&#[\d]*;/, String.fromCharCode(matched[1]))
+          matched = str_data.match(/&#([0-9]*);/);
+        }
       }
       return str_data;
     },
@@ -400,44 +489,44 @@ Example:
       * TODO
       *
       */
-    _timeSince: function(timestamp){
-      var date = new Date(timestamp * 1000);
-      var current_date = new Date();
-      var time;
-      if((current_date.getDate() - date.getDate()) == 0 ){
-        if((current_date.getHours() - date.getHours()) == 0 ){
-          if( (current_date.getMinutes() - date.getMinutes()) == 0 ){
-
-            time = current_date.getSeconds() - date.getSeconds();
-            time += time == 1? " second ago" : " seconds ago";
+    _changeTime: function(){
+      for (i=0;i<this.events.length;i++){
+        var date = new Date(this.events[i].last_activity_date * 1000);
+        var current_date = new Date();
+        var time;
+        if((current_date.getDate() - date.getDate()) == 0 ){
+          if((current_date.getHours() - date.getHours()) == 0 ){
+            if( (current_date.getMinutes() - date.getMinutes()) == 0 ){
+              time = current_date.getSeconds() - date.getSeconds();
+              time += time == 1? " second": " seconds";
+            }
+            else{
+              time = current_date.getMinutes() - date.getMinutes();
+              time += time == 1? " minute":  " minutes";
+            }
           }
           else{
-            time = current_date.getMinutes() - date.getMinutes();
-            time += time == 1? " minute ago" :  " minutes ago";
+            if (current_date.getHours() - date.getHours() == 1) {
+              time = current_date.getHours() - date.getHours()+" hour";
+            }else {
+              time = current_date.getHours() - date.getHours()+" hours";
+            }
+          }
+        }
+        else if( ((current_date.getDate() - date.getDate()) < 8) && ( (current_date.getDate() - date.getDate()) > 0)){
+          if( (current_date.getDate() - date.getDate()) == 1){
+            time = current_date.getDate() - date.getDate()+" day";
+          }
+          else{
+            time = current_date.getDate() - date.getDate()+" days";
           }
         }
         else{
-          if (current_date.getHours() - date.getHours() == 1) {
-            time = current_date.getHours() - date.getHours()+" hour ago";
-          }else {
-            time = current_date.getHours() - date.getHours()+" hours ago";
-          }
+          var month = ["jan","feb","mar","apr", "may","jun","jul","aug","sep","oct","nov","dec"];
+          time = date.getDate()+" "+month[date.getMonth()] + ". "+date.getFullYear();
         }
+        this.set("events." + i + ".date", time);
       }
-      else if( ((current_date.getDate() - date.getDate()) < 8) && ( (current_date.getDate() - date.getDate()) > 0)){
-        if( (current_date.getDate() - date.getDate()) == 1){
-          time = current_date.getDate() - date.getDate()+" day ago";
-        }
-        else{
-          time = current_date.getDate() - date.getDate()+" days ago";
-        }
-      }
-      else{
-        var month = ["Jan","Feb","Mar","Apr", "May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        time = date.getDate()+" "+month[date.getMonth()] + ". "+date.getFullYear();
-
-      }
-      return time
     },
 
   });
