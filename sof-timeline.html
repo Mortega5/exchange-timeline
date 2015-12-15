@@ -59,15 +59,20 @@ Example:
         margin:auto 0px;
       }
       #panel .paper-header .searchBar {
-        margin:auto 5px 0px 5px;
-        --paper-input-container-color: #eee;;
+        --paper-input-container-color: #eee;
         --paper-input-container-input: {
-          color: #eee;;
+          color: #eee;
         }
+        position:absolute;
+        top:0;
+        left:0;
+        right: 0;
+        height: var(--sof-timeline-title-height);
+        background-color: var(--paper-brown-800);
+        z-index:1000;
       }
-      paper-icon-button[suffix] {
-        width: 35px;
-        height: 35px;
+      paper-icon-button[prefix] {
+        color: black;
       }
       #panel .content {
         margin:15px 8px;
@@ -157,16 +162,17 @@ Example:
     </iron-ajax>
     <paper-header-panel id="panel" mode="waterfall" class="blue">
       <div class="paper-header horizontal layout">
-        <div class="title"></div>
+        <div class="title flex"></div>
+        <paper-input hidden label="search tags (separate them with whitespaces)" class="flex searchBar" id="searchBar" no-label-float value="{{searchBy::bind-value-changed}}" on-keyup="_searchBy" on-blur="_closeSearch">
+          <paper-icon-button icon="search" on-click="_searchBy" prefix></paper-icon-button>
+        </paper-input>
+        <paper-icon-button icon="search" on-click="_openSearch"></paper-icon-button>
         <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>
       </div>
       <paper-tabs selected="{{tabSelected}}">
-        <paper-tab>Last Questions</paper-tab>
+        <paper-tab>Last General Questions</paper-tab>
         <paper-tab>Your Questions</paper-tab>
       </paper-tabs>
-      <paper-input label="search tags" class="flex searchBar" id="searchBar" no-label-float value="{{searchBy::bind-value-changed}}" on-keyup="_searchBy">
-        <paper-icon-button icon="search" on-click="_searchBy" suffix></paper-icon-button>
-      </paper-input>
       <!-- CONTENT INFO-->
       <template is="dom-repeat" items="{{events}}">
         <paper-material elevation=1 class="content">
@@ -320,25 +326,47 @@ Example:
       * @return {object} {access_token:"value", key: "value", site: "value"}
       */
     _composeRequestParams: function(access_token, key, site, searchBy) {
-      return {access_token: access_token, key: key, site: site, tagged: searchBy.replace(" ", ";"), sort:"activity", order:"desc"};
+      return {access_token: access_token, key: key, site: site, tagged: searchBy.replace(/\s/g, ";"), sort:"activity", order:"desc"};
     },
-
+    /**
+      * TODO `_composeRequestUrl`
+      */
     _composeRequestUrl: function(selected) {
       return selected == 0 ? "https://api.stackexchange.com/2.2/questions": "https://api.stackexchange.com/2.2/me/questions"
     },
+    /**
+      * TODO `_searchBy`
+      */
     _searchBy: function(event){
       if (event.type === "keyup" && event.which === 13 || event.type === "click") {
         this.$.requestEvent.generateRequest();
       }
 
     },
+    /**
+      * TODO `_requestNewContent
+      */
     _requestNewContent: function(newValue, oldValue){
       if (oldValue !== undefined) {
         this.$.requestEvent.generateRequest();
       }
     },
-
-
+    /**
+    * TODO `_openSearch`
+    */
+    _openSearch: function(){
+      if (!this.searchBy) {
+        this.$.searchBar.hidden = false;
+        if (this.$.searchBar.hidden == false) {
+          this.$.searchBar.focus();
+        }
+      }
+    },
+    _closeSearch: function(e){
+      if (e.detail) {
+        this.$.searchBar.hidden = true;
+      }
+    },
     /**
       * Decode html encode to utf8 string
       *
