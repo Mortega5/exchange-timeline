@@ -14,6 +14,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-input/paper-input.html">
 
 
 <!--
@@ -53,7 +54,19 @@ Example:
         background: url('http://sstatic.net/stackexchange/img/logos/se/se-logo.png?v=dd7153fcc7fa') no-repeat;
         background-size: contain;
         height: var(--google-timeline-title-height, 45px);
-        margin:auto;
+        width: var(--google-timeline-title-width, 200px);
+        margin:auto 0px;
+      }
+      #panel .paper-header .searchBar {
+        margin:auto 5px 0px 5px;
+        --paper-input-container-color: #eee;;
+        --paper-input-container-input: {
+          color: #eee;;
+        }
+      }
+      paper-icon-button[suffix] {
+          width: 35px;
+          height: 35px;
       }
       #panel .content {
         margin:15px 8px;
@@ -115,9 +128,9 @@ Example:
       p {
         margin:auto;
       }
-    /* No funcionan las medias queries porque no se aplican sobre el host sino sobre toda la pantalla
-     * utilizar toggleClass(nombreClase, booleano, [nodo]) para modificar en funcion del tamaño
-     */
+      /* No funcionan las medias queries porque no se aplican sobre el host sino sobre toda la pantalla
+      * utilizar toggleClass(nombreClase, booleano, [nodo]) para modificar en funcion del tamaño
+      */
       @media screen (max-width: 500px){
         .votes, .views, .time > p > span{
           display: none !important;
@@ -136,7 +149,10 @@ Example:
     </iron-ajax>
     <paper-header-panel id="panel" mode="waterfall" class="blue">
       <div class="paper-header horizontal layout">
-        <div class="title flex"></div>
+        <div class="title"></div>
+        <paper-input label="search tags" class="flex searchBar" id="searchBar" no-label-float value="{{searchBy::bind-value-changed}}" on-keyup="_searchBy">
+          <paper-icon-button icon="search" on-click="_searchBy" suffix></paper-icon-button>
+        </paper-input>
         <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>
       </div>
       <!-- CONTENT INFO-->
@@ -172,7 +188,7 @@ Example:
                   </template>
                 </div>
                 <div class="time">
-                  <p><span>answered</span> {{_timeSince(item.creation_date)}}
+                  <p><span>answered</span> {{_timeSince(item.last_activity_date)}}
                     <a href="{{item.owner.link}}" class="link" target="_blank"> {{_decode_utf8(item.owner.display_name)}}</a >
                   </p>
                 </div>
@@ -222,7 +238,11 @@ Example:
         */
       _requestEventsParams: {
         type: String,
-        computed: "_composeRequestParams(access_token, key, site)"
+        computed: "_composeRequestParams(access_token, key, site, searchBy)"
+      },
+      searchBy: {
+        type: String,
+        value: ""
       },
 
       /**
@@ -233,15 +253,6 @@ Example:
        */
       author: {
         type: Object,
-        // Use `value` to provide a default value for a property, by setting it
-        // on your element's prototype.
-        //
-        // If you provide a function, as we do here, Polymer will call that
-        // _per element instance_.
-        //
-        // We do that to ensure that each element gets its own copy of the
-        // value, rather than having it shared across all instances (via the
-        // prototype).
         value: function() {
           return {
             name:  'Dimitri Glazkov',
@@ -288,10 +299,15 @@ Example:
       * @param {string} site URL provided as parameter
       * @return {object} {access_token:"value", key: "value", site: "value"}
       */
-    _composeRequestParams: function(access_token, key, site) {
-      return {access_token: access_token, key: key, site: site};
+    _composeRequestParams: function(access_token, key, site, searchBy) {
+      return {access_token: access_token, key: key, site: site, tagged: searchBy.replace(" ", ";"), sort:"activity", order:"desc"};
     },
-
+    _searchBy: function(event){
+      if (event.type === "keyup" && event.which === 13 || event.type === "click") {
+        this.$.requestEvent.generateRequest();
+      }
+      
+    },
     /**
       * Decode html encode to utf8 string
       *
@@ -313,14 +329,14 @@ Example:
       *
       */
     _timeSince: function(timestamp){
-      var date = new Date(timestamp);
+      var date = new Date(timestamp * 1000);
       var current_date = new Date();
       var time;
       if((current_date.getDate() - date.getDate()) == 0 ){
         if((current_date.getHours() - date.getHours()) == 0 ){
           if( (current_date.getMinutes() - date.getMinutes()) == 0 ){
 
-            time = current_date.getSeconds() - date.getSeconds()+" "+this.language_data.seconds
+            time = current_date.getSeconds() - date.getSeconds();
             time += time == 1? " second ago" : " seconds ago";
           }
           else{
