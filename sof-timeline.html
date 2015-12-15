@@ -212,7 +212,14 @@ Example:
                 </div>
               </div>
             </div>
-            <div></div>
+          </div>
+        </paper-material>
+      </template>
+      <template is="dom-if" if="{{_checkArraySize(events, 0)}}">
+        <paper-material elevation=1 class="content">
+          <div class="post vertical layout">
+            <p>Opss!! There are not results for <b>{{not_found}}</b> tag[s].</p> 
+            <p>Try it with other[s]</p>
           </div>
         </paper-material>
       </template>
@@ -316,6 +323,9 @@ Example:
     _handlerRequestEvent: function(event, detail){
       this.fire("sof-timeline-eventsReady", detail);
       this.events = detail.response.items;
+      if (this.events.length === 0) {
+        this.not_found = this.searchBy;
+      }
     },
 
     /**
@@ -355,17 +365,21 @@ Example:
     * TODO `_openSearch`
     */
     _openSearch: function(){
-      if (!this.searchBy) {
-        this.$.searchBar.hidden = false;
-        if (this.$.searchBar.hidden == false) {
-          this.$.searchBar.focus();
-        }
+      this.$.searchBar.hidden = false;
+      if (this.$.searchBar.hidden == false) {
+        this.$.searchBar.focus();
       }
     },
+    /**
+      * TODO `_closeSearch`
+      */
     _closeSearch: function(e){
-      if (e.detail) {
+      if (e.detail && !this.searchBy) {
         this.$.searchBar.hidden = true;
       }
+    },
+    _checkArraySize: function(array, size){
+      return array.length === size;
     },
     /**
       * Decode html encode to utf8 string

@@ -39,19 +39,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         });
 
-        test('check iron ajax request params', function() {
-          var params = {access_token: access_token, key: key, site:site}
-          // TESTING PROPERTY 
-          assert.equal(element._requestEventsParams.access_token, params.access_token);
-          assert.equal(element._requestEventsParams.key, params.key);
-          assert.equal(element._requestEventsParams.site, params.site);
-
-          //TESTING PARAMS VALUES OF IRON AJAX
-          assert.equal(element.$.requestEvent.params.access_token, params.access_token);
-          assert.equal(element.$.requestEvent.params.key, params.key);
-          assert.equal(element.$.requestEvent.params.site, params.site);
-        });
-
         /*        test('fires lasers', function(done) {
           element.addEventListener('sof-timeline-lasers', function(event) {
             assert.equal(event.detail.sound, 'Pew pew!');
