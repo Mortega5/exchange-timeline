@@ -1,5 +1,5 @@
 {
-  "name": "sof-timeline",
+  "name": "exchange-timeline",
   "version": "1.0.3",
   "authors": [
     "Miguel Ortega Moreno <mortega@conwet.com>"
@@ -11,7 +11,7 @@
     "stackoverflow",
     "stackoverflow timeline"
   ],
-  "main": "sof-timeline.html",
+  "main": "exchange-timeline.html",
   "license": "http://polymer.github.io/LICENSE.txt",
   "homepage": "https://github.com/mortega5/seed-element/",
   "ignore": [

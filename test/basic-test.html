@@ -17,20 +17,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script src="../../web-component-tester/browser.js"></script>
 
     <!-- Step 1: import the element to test -->
-    <link rel="import" href="../sof-timeline.html">
+    <link rel="import" href="../exchange-timeline.html">
   </head>
   <body>
 
     <!-- You can use the document as a place to set up your fixtures. -->
-    <sof-timeline access_token="f0J2pZBcOfvzHsZ*(8ohTg))" key="XGiATUM3eJCNfJviQBxefw((" site="stackoverflow"></sof-timeline>
+    <exchange-timeline access_token="f0J2pZBcOfvzHsZ*(8ohTg))" key="XGiATUM3eJCNfJviQBxefw((" site="stackoverflow"></exchange-timeline>
 
     <script>
-      var element = document.querySelector('sof-timeline');
+      var element = document.querySelector('exchange-timeline');
       var access_token = 'f0J2pZBcOfvzHsZ*(8ohTg))';
       var key = 'XGiATUM3eJCNfJviQBxefw((';
       var site = 'stackoverflow';
 
-      suite('<sof-timeline>', function() {
+      suite('<exchange-timeline>', function() {
 
         test('defines the access_token, site and key properties', function() {
           assert.equal(element.access_token, access_token);
@@ -40,7 +40,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         /*        test('fires lasers', function(done) {
-          element.addEventListener('sof-timeline-lasers', function(event) {
+          element.addEventListener('exchange-timeline-lasers', function(event) {
             assert.equal(event.detail.sound, 'Pew pew!');
             done();
           });

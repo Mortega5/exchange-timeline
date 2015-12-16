@@ -20,26 +20,39 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
 <!--
-An element providing a solution to no problem in particular.
+An element providing the interface for any site of exchanges
 
 Example:
+```
+<exchange-timeline access_token="user_access_token" key="your_app_key"
+site="stackoverflow.com">
+</exchange-timeline>
+```
+Custom property | Description | Default
+----------------|-------------|----------
+`--exchange-timeline-width` | Width of the element. | `650px`
+`--exchange-timeline-height` | Height of the element. | `400px`
+`--exchange-timeline-font-family` | Font type of the element. | `Roboto`
+`--exchange-timeline-header-color` | Color of the header  | `--paper-brown-800`
+`--exchange-timeline-header` | Mixin applied to the header | `{}`
+`--exchange-timeline-title-height` | Height of the logo img | `45px`
+`--exchange-timeline-title-width` | Width of the logo img | `200px`
 
-<sof-timeline></sof-timeline>
 
-@group Seed Elements
-@element sof-timeline
+@group Timeline Elements
+@element exchange-timeline
 @demo demo/index.html
-@hero hero.svg
+@hero stackoverflow-icon.png
 -->
-<dom-module id="sof-timeline">
+<dom-module id="exchange-timeline">
 
   <template>
     <style is="custom-style">
       :host {
         display: block;
-        width: var(--sof-timeline-width, 650px);
-        height: var(--sof-timeline-height, 400px);
-        font-family: var(--sof-timeline-font-family, Roboto)
+        width: var(--exchange-timeline-width, 650px);
+        height: var(--exchange-timeline-height, 400px);
+        font-family: var(--exchange-timeline-font-family, Roboto)
       }
       #panel{
         box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
@@ -47,16 +60,16 @@ Example:
         border-radius: 2px;
       }
       #panel .paper-header {
-        background-color: var(--sof-timeline-header-color, --paper-brown-800);
+        background-color: var(--exchange-timeline-header-color, --paper-brown-800);
         color: white;
         padding:5px 8px;
-        @apply(--sof-timeline-header)
+        @apply(--exchange-timeline-header)
           }
       #panel .paper-header .title{
         background: url('http://sstatic.net/stackexchange/img/logos/se/se-logo.png?v=dd7153fcc7fa') no-repeat;
         background-size: contain;
-        height: var(--sof-timeline-title-height, 45px);
-        width: var(--sof-timeline-title-width, 200px);
+        height: var(--exchange-timeline-title-height, 45px);
+        width: var(--exchange-timeline-title-width, 200px);
         margin:auto 0px;
       }
       #panel .paper-header .searchBar {
@@ -68,7 +81,7 @@ Example:
         top:0;
         left:0;
         right: 0;
-        height: var(--sof-timeline-title-height);
+        height: var(--exchange-timeline-title-height);
         background-color: var(--paper-brown-800);
         z-index:1000;
       }
@@ -186,8 +199,8 @@ Example:
     <paper-header-panel id="panel" mode="waterfall" class="blue">
       <div class="paper-header horizontal layout">
         <div class="title flex"></div>
-        <paper-input hidden label="search tags (separate them with whitespaces)" class="flex searchBar" id="searchBar" no-label-float value="{{searchBy::bind-value-changed}}" on-keyup="_searchBy" on-blur="_closeSearch">
-          <paper-icon-button icon="search" on-click="_searchBy" prefix></paper-icon-button>
+        <paper-input hidden label="search tags (separate them with whitespaces)" class="flex searchBar" id="searchBar" no-label-float value="{{filterBy::bind-value-changed}}" on-keyup="_filterBy" on-blur="_closeSearch">
+          <paper-icon-button icon="search" on-click="_filterBy" prefix></paper-icon-button>
         </paper-input>
         <paper-icon-button icon="search" on-click="_openSearch"></paper-icon-button>
         <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>
@@ -264,74 +277,85 @@ Example:
 
   Polymer({
 
-    is: 'sof-timeline',
+    is: 'exchange-timeline',
 
     properties: {
 
       /**
-       * `access_token` that permit read information about the user
+       * `access_token` that permit read information about the user. 
        */
       access_token: {
         type: String,
         reflectToAttribute: true
       },
+
       /**
-        * `key` is your key on StackOverFlow
+        * `key` is your app key on Stack Exchange. 
         */
       key: {
         type: String,
         reflectToAttribute: true
       },
       /**
-        * `site` TODO
+        * `site` where the timeline will get information. E.g: stackoverflow.com
         */
       site: {
         type:String,
         reflectToAttribute: true
       },
+
+      /**
+        * is the url where will get information. It is dependent
+        * of `tabSelected`
+        */
       _requestEventsUrl: {
         type: String,
         computed: "_composeRequestUrl(tabSelected)"
       },
 
       /**
-        * `_requestEventsParams` TODO
+        * compose the request param when it will get information
+        * about the user
         */
       _requestEventsParams: {
         type: Object,
-        computed: "_composeRequestParams(access_token, key, site, searchBy)"
+        computed: "_composeRequestParams(access_token, key, site, filterBy)"
       },
+
+      /**
+        * compose the refresh params when the user want refresh the information
+        * NOTE (it is not working yet)
+        */
       _requestRefreshParams: {
         type: Object,
-        computed: "_composeRefreshParams(access_token, key, site, searchBy, first_request)"
+        computed: "_composeRefreshParams(access_token, key, site, filterBy, first_request)"
       },
+
+      /**
+        * compose the refresh params when the user want load more data.
+        */
       _requestLoadmoreParams: {
         type: Object,
-        computed: "_composeLoadmoreParams(access_token, key, site, searchBy, first_request)"
+        computed: "_composeLoadmoreParams(access_token, key, site, filterBy, first_request)"
       },
-      searchBy: {
+
+      /**
+        * Filter the questions. 
+        */
+
+      filterBy: {
         type: String,
         value: ""
       },
+      /*
+       * Indicate that tab is selected.
+       * 
+       *  0: general or 1: your questions
+       */
       tabSelected: {
         type: Number,
         value: 0,
         observer: "_requestNewContent" 
-      },
-      /**
-       * Describes the author of the element, but is really just an excuse to
-       * show off JSDoc annotations.
-       *
-       * @type {{name: string, image: string}}
-       */
-      author: {
-        type: Object,
-        value: function() {
-          return {
-            name:  'Dimitri Glazkov',
-            image: 'http://addyosmani.com/blog/wp-content/uploads/2013/04/unicorn.jpg',
-          };
-        }
       },
 
     },
@@ -344,46 +368,80 @@ Example:
       }
     },
 
-    // Ajax request handler
-
     /**
-     * The `sof-timeline-eventsReady` event is fired whenever new events are loaded.
+     * The `exchange-timeline-eventsReady` event is fired whenever new events are loaded.
      *
-     * @event sof-timeline-eventsReady
+     * @event exchange-timeline-eventsReady
      * @detail {{sound: String}} 
      */
 
     /**
-      * TODO
+      * Handler the questions response.
       *
       * @param {object} event Object returned by ajax request
       * @param {object} detail Detail of response returned by ajax request
       * 
       */
     _handlerRequestEvent: function(event, detail){
-      this.fire("sof-timeline-eventsReady", detail);
+      this.fire("exchange-timeline-eventsReady", detail);
+      // set new events
       this.events = detail.response.items;
+      // Check if there are more questions
       this.has_more = detail.response.has_more;
+      // Save the first request timestamp. It will be used for refresh.
       this.first_request = detail.response.items[0].last_activity_date;
+      // Save the last request timestamp. It will be used for load more events. 
       this.last_request = detail.response.items[detail.response.items.length - 1].last_activity_date;
+      // If there're no matches, store the filter value
       if (this.events.length === 0) {
-        this.not_found = this.searchBy;
+        this.not_found = this.filterBy;
       }
+      // Change timestamp to human readable
       this._changeTime();
     },
+
+    /**
+      * Refresh the information showed in the timeline. It recalculate
+      * the time field and it add the new post 
+      */
     refresh: function(){
       this.$.refreshEvent.generateRequest();
     },
+
+    /**
+      * Request more data to the API and show it in the timeline.
+      */
     loadmore: function(){
-      this.$.loadmoreEvent.generateRequest();
+      if (this.has_more) {
+        this.$.loadmoreEvent.generateRequest();
+      }
     },
+
+    /**
+      * Handler the refresh response.
+      *
+      * @param {object} event Object returned by ajax request
+      * @param {object} detail Detail of response returned by ajax request
+      * 
+      */
     _handlerRefreshEvent: function(event, detail) {
-      this.first_request = detail.response.items[0].last_activity_date;
-      for (var i = detail.response.items.length - 1; i >= 0;i--) {
-        this.unshift('events', detail.response.items[i]);
+      var listEvents = detail.response.items;
+      if (listEvents) {
+        this.first_request = listEvents[0].last_activity_date;
+        for (var i = listEvents.length - 1; i >= 0;i--) {
+          this.unshift('events', listEvents[i]);
+        }
       }
       this._changeTime();
     },
+
+    /**
+      * Handler the load more response.
+      *
+      * @param {object} event Object returned by ajax request
+      * @param {object} detail Detail of response returned by ajax request
+      * 
+      */
     _handlerLoadmoreEvent: function(event, detail) {
       this.last_request = detail.response.items[0].last_activity_date;
       for (var i = 0; i < detail.response.items.length;i++) {
@@ -391,83 +449,114 @@ Example:
       }
       this._changeTime();
     },
+
     /**
-      * TODO Breaf description of `_componseRequestParam`
+      * Create a object with the params needed to request new questions
       * @param {string} access_token The user access token provide as parameter
       * @param {string} key SE key provided as parameter 
       * @param {string} site URL provided as parameter
-      * @return {object} {access_token:"value", key: "value", site: "value"}
+      * @return {object} "{access_token:"value", key: "value", site: "value",
+      *                   sort:"activity", order:"desc"}"
       */
-    _composeRequestParams: function(access_token, key, site, searchBy) {
+    _composeRequestParams: function(access_token, key, site, filterBy) {
       var params = {access_token: access_token, key: key, site: site,
                     sort:"activity", order:"desc"};
-      if (searchBy){
-        params.tagged =searchBy.replace(/\s/g, ";");
+      if (filterBy){
+        params.tagged =filterBy.replace(/\s/g, ";");
       }
       return params;    },
     /**
-      * TODO `_composeRequestUrl`
+      * Choose the endpoint depend on the tab selected.
+      * @param {Number} selected Tab number selected.
+      * @return {string}  Endpoint where it must request the data.
       */
     _composeRequestUrl: function(selected) {
       return selected == 0 ? "https://api.stackexchange.com/2.2/questions": "https://api.stackexchange.com/2.2/me/questions"
     },
 
-    _composeRefreshParams: function(access_token, key, site, searchBy, first_request){
+    /**
+      * Create a object with the params needed to request refresh
+      * @param {string} access_token The user access token provide as parameter
+      * @param {string} key SE key provided as parameter 
+      * @param {string} site URL provided as parameter
+      * @param {string} first_request Timestamp of the first element in the timeline.
+      * @return {object} "{access_token:"value", key: "value", site: "value",
+      *                   sort:"activity", order:"desc", [tagged: "filterBy"]}"
+      */
+    _composeRefreshParams: function(access_token, key, site, filterBy, first_request){
       var params = {access_token: access_token, key: key, site: site,
                     sort:"activity", order:"desc",
                     fromdate: first_request, todate: Math.ceil(new Date().getTime()/1000), pagesize:100};
-      if (searchBy){
-        params.tagged = searchBy.replace(/\s/g, ";");
-      }
-      return params;
-    },
-    _composeLoadmoreParams: function(access_token, key, site, searchBy, last_request){
-      var params = {access_token: access_token, key: key, site: site,
-                    sort:"activity", order:"desc",
-                    max: last_request};
-      if (searchBy){
-        params.tagged = searchBy.replace(/\s/g, ";");
+      if (filterBy){
+        params.tagged = filterBy.replace(/\s/g, ";");
       }
       return params;
     },
 
     /**
-      * TODO `_searchBy`
+      * Create a object with the params needed to load more questions
+      * @param {string} access_token The user access token provide as parameter
+      * @param {string} key SE key provided as parameter 
+      * @param {string} site URL provided as parameter
+      * @param {string} last_request Timestamp of the last element in the timeline.
+      * @return {object} "{access_token:"value", key: "value", site: "value",
+      *                   sort:"activity", ord:"desc", [tagged: "filterBy"]}"
       */
-    _searchBy: function(event){
+    _composeLoadmoreParams: function(access_token, key, site, filterBy, last_request){
+      var params = {access_token: access_token, key: key, site: site,
+                    sort:"activity", order:"desc",
+                    max: last_request};
+      if (filterBy){
+        params.tagged = filterBy.replace(/\s/g, ";");
+      }
+      return params;
+    },
+
+    /**
+      * Check when the user want filter the questions by tags
+      * @param {object} event Event that produce the search action.
+      */
+    _filterBy: function(event){
       if (event.type === "keyup" && event.which === 13 || event.type === "click") {
         this.$.requestEvent.generateRequest();
       }
 
     },
     /**
-      * TODO `_requestNewContent
+      * Observe when the user change the tab selected
       */
     _requestNewContent: function(newValue, oldValue){
       if (oldValue !== undefined) {
         this.$.requestEvent.generateRequest();
       }
     },
+
     /**
-    * TODO `_openSearch`
-    */
-    _openSearch: function(){
+      *  Open the search bar
+      */
+    openSearch: function(){
       this.$.searchBar.hidden = false;
       if (this.$.searchBar.hidden == false) {
         this.$.searchBar.focus();
       }
     },
+
     /**
-      * TODO `_closeSearch`
+      * Close the search bar if there are no tags in the input.
       */
-    _closeSearch: function(e){
-      if (e.detail && !this.searchBy) {
+    closeSearch: function(e){
+      if (e.detail && !this.filterBy) {
         this.$.searchBar.hidden = true;
       }
     },
+
+    /**
+      * Check if an array have `Size` elements
+      */
     _checkArraySize: function(array, size){
       return array.length === size;
     },
+
     /**
       * Decode html encode to utf8 string
       *
@@ -485,8 +574,9 @@ Example:
       }
       return str_data;
     },
+
     /**
-      * TODO
+      * Convert the events timestamp to human readble date
       *
       */
     _changeTime: function(){
