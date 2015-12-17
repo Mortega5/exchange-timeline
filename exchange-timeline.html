@@ -66,7 +66,7 @@ Custom property | Description | Default
         @apply(--exchange-timeline-header)
           }
       #panel .paper-header .title{
-        background: url('http://sstatic.net/stackexchange/img/logos/se/se-logo.png?v=dd7153fcc7fa') no-repeat;
+        background: url('image/se-logo.png') no-repeat;
         background-size: contain;
         height: var(--exchange-timeline-title-height, 45px);
         width: var(--exchange-timeline-title-width, 200px);
@@ -172,6 +172,9 @@ Custom property | Description | Default
         background-color: var(--paper-brown-400);
 
       }
+      #panel .content.error .post {
+        padding:25px 8px;
+      }
     </style>
 
     <iron-ajax
@@ -179,6 +182,7 @@ Custom property | Description | Default
                params="{{_requestEventsParams}}"
                handle-as="json"
                on-response="_handlerRequestEvent"
+               on-error="_handlerRequestError"
                id="requestEvent">
 
     </iron-ajax>
@@ -186,6 +190,7 @@ Custom property | Description | Default
                params="{{_requestRefreshParams}}"
                handle-as="json"
                on-response="_handlerRefreshEvent"
+               on-error="_handlerRequestError"
                id="refreshEvent"
                >
     </iron-ajax>
@@ -193,79 +198,91 @@ Custom property | Description | Default
                params="{{_requestLoadmoreParams}}"
                handle-as="json"
                on-response="_handlerLoadmoreEvent"
+               on-error="_handlerRequestError"
                id="loadmoreEvent"
                >
     </iron-ajax>
     <paper-header-panel id="panel" mode="waterfall" class="blue">
       <div class="paper-header horizontal layout">
         <div class="title flex"></div>
-        <paper-input hidden label="search tags (separate them with whitespaces)" class="flex searchBar" id="searchBar" no-label-float value="{{filterBy::bind-value-changed}}" on-keyup="_filterBy" on-blur="_closeSearch">
+        <paper-input hidden label="search tags (separate them with whitespaces)" class="flex searchBar" id="searchBar" no-label-float value="{{filterBy::bind-value-changed}}" on-keyup="_filterBy" on-blur="closeSearch">
           <paper-icon-button icon="search" on-click="_filterBy" prefix></paper-icon-button>
         </paper-input>
-        <paper-icon-button icon="search" on-click="_openSearch"></paper-icon-button>
-        <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>
+        <paper-icon-button icon="search" on-click="openSearch"></paper-icon-button>
+<!--        <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>-->
       </div>
       <paper-tabs selected="{{tabSelected}}">
         <paper-tab>Last General Questions</paper-tab>
         <paper-tab>Your Questions</paper-tab>
       </paper-tabs>
-      <!-- CONTENT INFO-->
-      <template is="dom-repeat" items="{{events}}">
-        <paper-material elevation=1 class="content">
-          <div class="post horizontal layout">
-            <!-- VOTES -->
-            <div class="votes status vertical center-justified layout">
-              <p>{{item.score}}</p>
-              <p>votes</p>
-            </div>
-            <!-- ANSWERS -->
-            <div count$="{{item.answer_count}}" answered$="{{item.is_answered}}" class="answer status vertical center-justified layout">
-              <p>{{item.answer_count}}</p>
-              <p>answer</p>
-            </div>
-            <!-- VIEWS -->
-            <div class="views status vertical center-justified layout">
-              <p>{{item.view_count}}</p>
-              <p>views</p>
-            </div>
-            <!-- POSTINFO -->
-            <div class="postInfo vertical layout flex">
-              <!-- TITLE -->
-              <div class="title flex">
-                <a href="{{item.link}}" target="_blank" class="link">{{_decode_utf8(item.title)}}</a>
+      <!-- Check if an error happened -->
+      <template is="dom-if" if="{{_compareTo(request_error, 'false')}}">
+        <!-- CONTENT INFO-->
+        <template is="dom-repeat" items="{{events}}">
+          <paper-material elevation=1 class="content">
+            <div class="post horizontal layout">
+              <!-- VOTES -->
+              <div class="votes status vertical center-justified layout">
+                <p>{{item.score}}</p>
+                <p>votes</p>
               </div>
-              <!-- TAGS AND TIME -->
-              <div class="additionalInfo horizontal layout">
-                <div class="tags flex">
-                  <template is="dom-repeat" items="{{item.tags}}">
-                    <span class="link tag">{{item}}</span>
-                  </template>
+              <!-- ANSWERS -->
+              <div count$="{{item.answer_count}}" answered$="{{item.is_answered}}" class="answer status vertical center-justified layout">
+                <p>{{item.answer_count}}</p>
+                <p>answer</p>
+              </div>
+              <!-- VIEWS -->
+              <div class="views status vertical center-justified layout">
+                <p>{{item.view_count}}</p>
+                <p>views</p>
+              </div>
+              <!-- POSTINFO -->
+              <div class="postInfo vertical layout flex">
+                <!-- TITLE -->
+                <div class="title flex">
+                  <a href="{{item.link}}" target="_blank" class="link">{{_decode_utf8(item.title)}}</a>
                 </div>
-                <div class="time">
-                  <p>{{item.date}}
-                    <a href="{{item.owner.link}}" class="link" target="_blank"> {{_decode_utf8(item.owner.display_name)}}</a >
-                  </p>
+                <!-- TAGS AND TIME -->
+                <div class="additionalInfo horizontal layout">
+                  <div class="tags flex">
+                    <template is="dom-repeat" items="{{item.tags}}">
+                      <span class="link tag">{{item}}</span>
+                    </template>
+                  </div>
+                  <div class="time">
+                    <p>{{item.date}}
+                      <a href="{{item.owner.link}}" class="link" target="_blank"> {{_decode_utf8(item.owner.display_name)}}</a >
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </paper-material>
-      </template>
-      <template is="dom-if" if="{{_checkArraySize(events, 0)}}">
-        <paper-material elevation=1 class="content loadmore">
-          <div class="post vertical layout">
-            <p>Opss!! There are not results for <b>{{not_found}}</b> tag[s].</p> 
-            <p>Try it with other[s]</p>
-          </div>
-        </paper-material>
-      </template>
-      <!-- Show more button -->
-      <template is="dom-if" if="{{has_more}}">
-        <div class="horizontal center-justified layout loadmore">
-          <paper-material elevation="2">
-            <paper-button on-click="loadmore">Load More</paper-button>
           </paper-material>
-        </div>
+        </template>
+        <template is="dom-if" if="{{_compareTo(events.length, 0)}}">
+          <paper-material elevation=1 class="content loadmore">
+            <div class="post vertical layout">
+              <p>Opss!! There are not results for <b>{{not_found}}</b> tag[s].</p> 
+              <p>Try it with other[s]</p>
+            </div>
+          </paper-material>
+        </template>
+        <!-- Show more button -->
+        <template is="dom-if" if="{{has_more}}">
+          <div class="horizontal center-justified layout loadmore">
+            <paper-material elevation="2">
+              <paper-button on-click="loadmore">Load More</paper-button>
+            </paper-material>
+          </div>
+        </template>
+      </template> <!-- /Check error -->
+      <template is="dom-if" if="{{request_error}}">
+        <paper-material elevation=1 class="content error">
+          <div class="post vertical center layout">
+            <p>An error ocurred. Plase try it later</p> 
+            <p>Sorry for the inconveniences</p>
+          </div>
+        </paper-material>
       </template>
     </paper-header-panel>
   </template>
@@ -357,6 +374,10 @@ Custom property | Description | Default
         value: 0,
         observer: "_requestNewContent" 
       },
+      request_error: {
+        type: Boolean,
+        value: false
+      }
 
     },
 
@@ -364,6 +385,7 @@ Custom property | Description | Default
 
     ready: function() {
       if(this._requestEventsParams){
+        this.$.panel.style.cursor = "wait";
         this.$.requestEvent.generateRequest();
       }
     },
@@ -383,7 +405,9 @@ Custom property | Description | Default
       * 
       */
     _handlerRequestEvent: function(event, detail){
+      this.$.panel.style.cursor = "";
       this.fire("exchange-timeline-eventsReady", detail);
+      this.request_error = false;
       // set new events
       this.events = detail.response.items;
       // Check if there are more questions
@@ -400,11 +424,18 @@ Custom property | Description | Default
       this._changeTime();
     },
 
+    _handlerRequestError: function(event, detail) {
+      this.$.panel.style.cursor = "";
+      this.fire("exchange-timeline-errorRequest", {detail:detail});
+      this.request_error = true; 
+    },
+
     /**
       * Refresh the information showed in the timeline. It recalculate
       * the time field and it add the new post 
       */
     refresh: function(){
+      this.$.panel.style.cursor = "wait";
       this.$.refreshEvent.generateRequest();
     },
 
@@ -413,6 +444,7 @@ Custom property | Description | Default
       */
     loadmore: function(){
       if (this.has_more) {
+        this.$.panel.style.cursor = "wait";
         this.$.loadmoreEvent.generateRequest();
       }
     },
@@ -425,6 +457,9 @@ Custom property | Description | Default
       * 
       */
     _handlerRefreshEvent: function(event, detail) {
+      this.request_error = false;
+      this.$.panel.style.cursor = "";
+
       var listEvents = detail.response.items;
       if (listEvents) {
         this.first_request = listEvents[0].last_activity_date;
@@ -443,6 +478,8 @@ Custom property | Description | Default
       * 
       */
     _handlerLoadmoreEvent: function(event, detail) {
+      this.request_error = false;
+      this.$.panel.style.cursor = "";
       this.last_request = detail.response.items[0].last_activity_date;
       for (var i = 0; i < detail.response.items.length;i++) {
         this.push('events', detail.response.items[i]);
@@ -465,6 +502,7 @@ Custom property | Description | Default
         params.tagged =filterBy.replace(/\s/g, ";");
       }
       return params;    },
+
     /**
       * Choose the endpoint depend on the tab selected.
       * @param {Number} selected Tab number selected.
@@ -518,15 +556,18 @@ Custom property | Description | Default
       */
     _filterBy: function(event){
       if (event.type === "keyup" && event.which === 13 || event.type === "click") {
+        this.$.panel.style.cursor = "wait";
         this.$.requestEvent.generateRequest();
       }
 
     },
+
     /**
       * Observe when the user change the tab selected
       */
     _requestNewContent: function(newValue, oldValue){
       if (oldValue !== undefined) {
+        this.$.panel.style.cursor = "wait";
         this.$.requestEvent.generateRequest();
       }
     },
@@ -550,12 +591,16 @@ Custom property | Description | Default
       }
     },
 
+    // AUXILIAR FUNCTION
     /**
-      * Check if an array have `Size` elements
+      * Check if the first param is equals to second param
       */
-    _checkArraySize: function(array, size){
-      return array.length === size;
+    _compareTo: function(item, item2){
+      item2 = item2 == "false"? false: item2;
+      item2 = item2 == "true"? true: item2;
+      return item === item2;
     },
+
 
     /**
       * Decode html encode to utf8 string

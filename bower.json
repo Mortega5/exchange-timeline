@@ -8,8 +8,8 @@
   "keywords": [
     "web-component",
     "polymer",
-    "stackoverflow",
-    "stackoverflow timeline"
+    "stackexchange",
+    "stack exchange timeline"
   ],
   "main": "exchange-timeline.html",
   "license": "http://polymer.github.io/LICENSE.txt",
