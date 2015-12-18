@@ -209,7 +209,7 @@ Custom property | Description | Default
           <paper-icon-button icon="search" on-click="_filterBy" prefix></paper-icon-button>
         </paper-input>
         <paper-icon-button icon="search" on-click="openSearch"></paper-icon-button>
-<!--        <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>-->
+        <!--        <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>-->
       </div>
       <paper-tabs selected="{{tabSelected}}">
         <paper-tab>Last General Questions</paper-tab>
@@ -261,7 +261,7 @@ Custom property | Description | Default
         </template>
         <template is="dom-if" if="{{_compareTo(events.length, 0)}}">
           <paper-material elevation=1 class="content loadmore">
-            <div class="post vertical layout">
+            <div class="post vertical layout" id="not_found">
               <p>Opss!! There are not results for <b>{{not_found}}</b> tag[s].</p> 
               <p>Try it with other[s]</p>
             </div>
@@ -269,7 +269,7 @@ Custom property | Description | Default
         </template>
         <!-- Show more button -->
         <template is="dom-if" if="{{has_more}}">
-          <div class="horizontal center-justified layout loadmore">
+          <div class="horizontal center-justified layout loadmore" id="loadmore">
             <paper-material elevation="2">
               <paper-button on-click="loadmore">Load More</paper-button>
             </paper-material>
@@ -278,7 +278,7 @@ Custom property | Description | Default
       </template> <!-- /Check error -->
       <template is="dom-if" if="{{request_error}}">
         <paper-material elevation=1 class="content error">
-          <div class="post vertical center layout">
+          <div class="post vertical center layout" id="error">
             <p>An error ocurred. Plase try it later</p> 
             <p>Sorry for the inconveniences</p>
           </div>
@@ -629,7 +629,16 @@ Custom property | Description | Default
         var date = new Date(this.events[i].last_activity_date * 1000);
         var current_date = new Date();
         var time;
-        if((current_date.getDate() - date.getDate()) == 0 ){
+        /* Years */
+        if ((current_date.getFullYear() - date.getFullYear()) != 0) {
+          var dif = current_date.getFullYear() - date.getFullYear()
+          time = dif==1 ? dif + " " + this.data.year : dif + " " + this.data.years;
+          /* Months */
+        } else if ((current_date.getMonth() - date.getMonth()) != 0) { 
+          var dif = current_date.getMonth() - date.getMonth();
+          time = dif==1 ? dif + " " + this.data.month : dif + " " + this.data.months;
+          /* Days */
+        } else if((current_date.getDate() - date.getDate()) == 0 ){
           if((current_date.getHours() - date.getHours()) == 0 ){
             if( (current_date.getMinutes() - date.getMinutes()) == 0 ){
               time = current_date.getSeconds() - date.getSeconds();

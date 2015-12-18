@@ -22,32 +22,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <body>
 
     <!-- You can use the document as a place to set up your fixtures. -->
-    <exchange-timeline access_token="f0J2pZBcOfvzHsZ*(8ohTg))" key="XGiATUM3eJCNfJviQBxefw((" site="stackoverflow"></exchange-timeline>
-
+    <test-fixture id="test">
+      <exchange-timeline>
+      </exchange-timeline>
+    </test-fixture>
     <script>
-      var element = document.querySelector('exchange-timeline');
-      var access_token = 'f0J2pZBcOfvzHsZ*(8ohTg))';
-      var key = 'XGiATUM3eJCNfJviQBxefw((';
-      var site = 'stackoverflow';
+      var timeline;
 
-      suite('<exchange-timeline>', function() {
+      var valid_access_token = 'f0J2pZBcOfvzHsZ*(8ohTg))';
+      var valid_key = 'XGiATUM3eJCNfJviQBxefw((';
+      var valid_site = 'stackoverflow';
 
-        test('defines the access_token, site and key properties', function() {
-          assert.equal(element.access_token, access_token);
-          assert.equal(element.key, key);
-          assert.equal(element.site, site);
+      var invalid_access_token = 'fake_access_token';
+      var invalid_key = 'fake_key';
+      var invalid_site = 'fake_site';
 
+      suite('test with correct key, access_token and site', function() {
+        setup(function(){
+          timeline = document.querySelector('exchange-timeline');
+          timeline.access_token = valid_access_token;
+          timeline.key = valid_key;
+          timeline.site = valid_site;
         });
-
-        /*        test('fires lasers', function(done) {
+        test('defines the access_token, site and key properties', function() {
+          assert.equal(timeline.access_token, valid_access_token);
+          assert.equal(timeline.key, valid_key);
+          assert.equal(timeline.site, valid_site);
+        });
+        test('check if the search bar can be opened and closed', function(){
+          assert.isTrue(timeline.$.searchBar.hidden);
+          timeline.openSearch();
+          assert.isDefined(timeline.$.searchBar);
+          assert.isFalse(timeline.$.searchBar.hidden);
+          timeline.closeSearch({detail:"test"});
+          assert.isTrue(timeline.$.searchBar.hidden);
+        });
+        test('check if change time works', function(){
+          assert.fail();
+        });
+      });
+      /*        test('fires lasers', function(done) {
           element.addEventListener('exchange-timeline-lasers', function(event) {
             assert.equal(event.detail.sound, 'Pew pew!');
             done();
           });
           element.fireLasers();
         });*/
-
-      });
     </script>
 
   </body>
