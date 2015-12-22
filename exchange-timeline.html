@@ -30,10 +30,10 @@ site="stackoverflow.com">
 ```
 Custom property | Description | Default
 ----------------|-------------|----------
-`--exchange-timeline-width` | Width of the element. | `650px`
+`--exchange-timeline-width` | Width of the element. | `450px`
 `--exchange-timeline-height` | Height of the element. | `400px`
 `--exchange-timeline-font-family` | Font type of the element. | `Roboto`
-`--exchange-timeline-header-color` | Color of the header  | `--paper-brown-800`
+`--exchange-timeline-header-color` | Color of the header  | `--paper-grey-800`
 `--exchange-timeline-header` | Mixin applied to the header | `{}`
 `--exchange-timeline-title-height` | Height of the logo img | `45px`
 `--exchange-timeline-title-width` | Width of the logo img | `200px`
@@ -50,7 +50,7 @@ Custom property | Description | Default
     <style is="custom-style">
       :host {
         display: block;
-        width: var(--exchange-timeline-width, 650px);
+        width: var(--exchange-timeline-width, 450px);
         height: var(--exchange-timeline-height, 400px);
         font-family: var(--exchange-timeline-font-family, Roboto)
       }
@@ -60,33 +60,49 @@ Custom property | Description | Default
         border-radius: 2px;
       }
       #panel .paper-header {
-        background-color: var(--exchange-timeline-header-color, --paper-brown-800);
+        background-color: var(--exchange-timeline-header-color, --paper-grey-800);
         color: white;
-        padding:5px 8px;
+        padding:15px 8px;
         @apply(--exchange-timeline-header)
           }
       #panel .paper-header .title{
         background: url('image/se-logo.png') no-repeat;
         background-size: contain;
-        height: var(--exchange-timeline-title-height, 45px);
-        width: var(--exchange-timeline-title-width, 200px);
+        height: var(--exchange-timeline-title-height, 25px);
+        width: var(--exchange-timeline-title-width, 25px);
         margin:auto 0px;
       }
-      #panel .paper-header .searchBar {
-        --paper-input-container-color: #eee;
-        --paper-input-container-input: {
-          color: #eee;
-        }
-        position:absolute;
-        top:0;
-        left:0;
-        right: 0;
-        height: var(--exchange-timeline-title-height);
-        background-color: var(--paper-brown-800);
-        z-index:1000;
+      #panel .paper-header .user_information,
+      #panel .paper-header .user_information .image{
+        margin:auto 5px;
+        font-size:12px;
+      }
+      #panel .paper-header .user_information .badge[count="0"] {
+        display:none;
+      }
+      #panel .paper-header .user_information .badge .icon {
+        border-radius: 50%;
+        width: 5px;
+        height: 5px;
+        margin:auto 5px;
+      }
+      #panel .paper-header .user_information .badge .icon.bronze{
+        background-color: #DBC27E;
+      }
+      #panel .paper-header .user_information .badge .icon.silver {
+        background-color: silver;
+      }
+      #panel .paper-header .user_information .badge .icon.gold {
+        background-color: gold;
+      }
+      #panel .paper-header .user_information .reputation {
+        margin: auto 8px;
       }
       paper-icon-button[prefix] {
         color: black;
+      }
+      .logo span {
+        margin:auto 3px;
       }
       #panel .content {
         margin:15px 8px;
@@ -148,37 +164,22 @@ Custom property | Description | Default
       p {
         margin:auto;
       }
-      /* No funcionan las medias queries porque no se aplican sobre el host sino sobre toda la pantalla
-      * utilizar toggleClass(nombreClase, booleano, [nodo]) para modificar en funcion del tamaño
-      */
-      @media screen (max-width: 500px){
-        .votes, .views, .time > p > span{
-          display: none !important;
-        }
-      }
-      paper-tabs{
-        height: 40px;
-        font-size: 12px;
-        --paper-tabs-selection-bar-color: var(--paper-orange-700);
-      }
-      paper-tab {
-        --paper-tab-ink: var(--paper-blue-700);
-      }
       .loadmore paper-material{
         margin-bottom: 15px;
-        background-color: var(--paper-brown-300);
+        background-color: var(--paper-grey-400);
       }
       .loadmore paper-material:hover {
-        background-color: var(--paper-brown-400);
+        background-color: var(--paper-grey-500);
 
       }
       #panel .content.error .post {
         padding:25px 8px;
       }
+
     </style>
 
     <iron-ajax
-               url="{{_requestEventsUrl}}"
+               url="https://api.stackexchange.com/2.2/me/questions"
                params="{{_requestEventsParams}}"
                handle-as="json"
                on-response="_handlerRequestEvent"
@@ -186,15 +187,17 @@ Custom property | Description | Default
                id="requestEvent">
 
     </iron-ajax>
-    <iron-ajax url="{{_requestEventsUrl}}"
-               params="{{_requestRefreshParams}}"
+
+    <iron-ajax url="https://api.stackexchange.com/2.2/me"
+               params="{{_requestUserInfo}}"
                handle-as="json"
-               on-response="_handlerRefreshEvent"
+               on-response="_handlerRequestInfo"
                on-error="_handlerRequestError"
-               id="refreshEvent"
+               id="requestInfo"
+               auto
                >
     </iron-ajax>
-    <iron-ajax url="{{_requestEventsUrl}}"
+    <iron-ajax url="https://api.stackexchange.com/2.2/me/questions"
                params="{{_requestLoadmoreParams}}"
                handle-as="json"
                on-response="_handlerLoadmoreEvent"
@@ -203,38 +206,59 @@ Custom property | Description | Default
                >
     </iron-ajax>
     <paper-header-panel id="panel" mode="waterfall" class="blue">
+
+      <!-- TIMELINE HEADER-->
       <div class="paper-header horizontal layout">
-        <div class="title flex"></div>
-        <paper-input hidden label="search tags (separate them with whitespaces)" class="flex searchBar" id="searchBar" no-label-float value="{{filterBy::bind-value-changed}}" on-keyup="_filterBy" on-blur="closeSearch">
-          <paper-icon-button icon="search" on-click="_filterBy" prefix></paper-icon-button>
-        </paper-input>
-        <paper-icon-button icon="search" on-click="openSearch"></paper-icon-button>
-        <!--        <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>-->
+        <!-- LOGO stack exchange icon -->
+        <div class="flex horizontal layout logo">
+          <div class="title"></div>
+          <span> Stack Exchange</span>
+        </div>
+
+        <!-- USER INFORMATION-->
+        <div class="user_information horizontal layout">
+          <!-- USER image-->
+          <iron-icon class="image" src="{{user.profile_image}}"></iron-icon>
+          <!-- USER name-->
+          <p class="username">{{user.display_name}}</p>
+          <!-- USER reputation -->
+          <p class="reputation">{{user.reputation}}</p>
+
+          <!--  BADGES -->
+          <!-- gold-->
+          <div class="badge horizontal layout" count$="{{user.badge_counts.gold}}">
+            <div class="gold icon"></div>
+            <p>{{user.badge_counts.gold}}</p>
+          </div>
+
+          <!-- silver-->
+          <div class="badge horizontal layout" count$="{{user.badge_counts.silver}}">
+            <div class="silver icon"></div>
+            <p>{{user.badge_counts.silver}}</p>
+          </div>
+
+          <!-- bronze-->
+          <div class="badge horizontal layout" count$="{{user.badge_counts.bronze}}">
+            <div class="bronze icon"></div>
+            <p>{{user.badge_counts.bronze}}</p>
+          </div>
+        </div>
+
+        <!-- REFRESH ICON -->
+        <div><paper-icon-button icon="refresh" on-click="refresh"></paper-icon-button></div>
       </div>
-      <paper-tabs selected="{{tabSelected}}">
-        <paper-tab>Last General Questions</paper-tab>
-        <paper-tab>Your Questions</paper-tab>
-      </paper-tabs>
+
+      <!-- TIMELINE BODY -->
       <!-- Check if an error happened -->
       <template is="dom-if" if="{{_compareTo(request_error, 'false')}}">
         <!-- CONTENT INFO-->
         <template is="dom-repeat" items="{{events}}">
           <paper-material elevation=1 class="content">
             <div class="post horizontal layout">
-              <!-- VOTES -->
-              <div class="votes status vertical center-justified layout">
-                <p>{{item.score}}</p>
-                <p>votes</p>
-              </div>
               <!-- ANSWERS -->
               <div count$="{{item.answer_count}}" answered$="{{item.is_answered}}" class="answer status vertical center-justified layout">
                 <p>{{item.answer_count}}</p>
                 <p>answer</p>
-              </div>
-              <!-- VIEWS -->
-              <div class="views status vertical center-justified layout">
-                <p>{{item.view_count}}</p>
-                <p>views</p>
               </div>
               <!-- POSTINFO -->
               <div class="postInfo vertical layout flex">
@@ -322,30 +346,20 @@ Custom property | Description | Default
       },
 
       /**
-        * is the url where will get information. It is dependent
-        * of `tabSelected`
-        */
-      _requestEventsUrl: {
-        type: String,
-        computed: "_composeRequestUrl(tabSelected)"
-      },
-
-      /**
         * compose the request param when it will get information
         * about the user
         */
       _requestEventsParams: {
         type: Object,
-        computed: "_composeRequestParams(access_token, key, site, filterBy)"
+        computed: "_composeRequestParams(access_token, key, site)"
       },
 
       /**
-        * compose the refresh params when the user want refresh the information
-        * NOTE (it is not working yet)
+        * compose the user request params
         */
-      _requestRefreshParams: {
+      _requestUserInfo: {
         type: Object,
-        computed: "_composeRefreshParams(access_token, key, site, filterBy, first_request)"
+        computed: "_composeUserInfo(access_token, key, site)"
       },
 
       /**
@@ -353,32 +367,17 @@ Custom property | Description | Default
         */
       _requestLoadmoreParams: {
         type: Object,
-        computed: "_composeLoadmoreParams(access_token, key, site, filterBy, first_request)"
+        computed: "_composeLoadmoreParams(access_token, key, site, page)"
       },
 
-      /**
-        * Filter the questions. 
-        */
-
-      filterBy: {
-        type: String,
-        value: ""
-      },
-      /*
-       * Indicate that tab is selected.
-       * 
-       *  0: general or 1: your questions
-       */
-      tabSelected: {
-        type: Number,
-        value: 0,
-        observer: "_requestNewContent" 
-      },
       request_error: {
         type: Boolean,
         value: false
+      },
+      page: {
+        type: Number,
+        value: 1
       }
-
     },
 
     // Element Lifecycle
@@ -412,10 +411,6 @@ Custom property | Description | Default
       this.events = detail.response.items;
       // Check if there are more questions
       this.has_more = detail.response.has_more;
-      // Save the first request timestamp. It will be used for refresh.
-      this.first_request = detail.response.items[0].last_activity_date;
-      // Save the last request timestamp. It will be used for load more events. 
-      this.last_request = detail.response.items[detail.response.items.length - 1].last_activity_date;
       // If there're no matches, store the filter value
       if (this.events.length === 0) {
         this.not_found = this.filterBy;
@@ -432,11 +427,14 @@ Custom property | Description | Default
 
     /**
       * Refresh the information showed in the timeline. It recalculate
-      * the time field and it add the new post 
+      * the time field and it add the new post.
+      * NOTE: when sthe component is reloaded, it only show the first 30 post
+      * a pesar de haber cargado más
       */
     refresh: function(){
       this.$.panel.style.cursor = "wait";
-      this.$.refreshEvent.generateRequest();
+      this.page = 1;
+      this.$.requestEvent.generateRequest();
     },
 
     /**
@@ -444,30 +442,21 @@ Custom property | Description | Default
       */
     loadmore: function(){
       if (this.has_more) {
+        this.page++;
         this.$.panel.style.cursor = "wait";
         this.$.loadmoreEvent.generateRequest();
       }
     },
 
     /**
-      * Handler the refresh response.
+      * Handler the user information response.
       *
       * @param {object} event Object returned by ajax request
       * @param {object} detail Detail of response returned by ajax request
       * 
       */
-    _handlerRefreshEvent: function(event, detail) {
-      this.request_error = false;
-      this.$.panel.style.cursor = "";
-
-      var listEvents = detail.response.items;
-      if (listEvents) {
-        this.first_request = listEvents[0].last_activity_date;
-        for (var i = listEvents.length - 1; i >= 0;i--) {
-          this.unshift('events', listEvents[i]);
-        }
-      }
-      this._changeTime();
+    _handlerRequestInfo: function(event, detail) {
+      this.user = detail.response.items[0];
     },
 
     /**
@@ -480,7 +469,6 @@ Custom property | Description | Default
     _handlerLoadmoreEvent: function(event, detail) {
       this.request_error = false;
       this.$.panel.style.cursor = "";
-      this.last_request = detail.response.items[0].last_activity_date;
       for (var i = 0; i < detail.response.items.length;i++) {
         this.push('events', detail.response.items[i]);
       }
@@ -495,13 +483,10 @@ Custom property | Description | Default
       * @return {object} "{access_token:"value", key: "value", site: "value",
       *                   sort:"activity", order:"desc"}"
       */
-    _composeRequestParams: function(access_token, key, site, filterBy) {
-      var params = {access_token: access_token, key: key, site: site,
-                    sort:"activity", order:"desc"};
-      if (filterBy){
-        params.tagged =filterBy.replace(/\s/g, ";");
-      }
-      return params;    },
+    _composeRequestParams: function(access_token, key, site) {
+
+      return {access_token: access_token, key: key, site: site};
+    },
 
     /**
       * Choose the endpoint depend on the tab selected.
@@ -509,7 +494,7 @@ Custom property | Description | Default
       * @return {string}  Endpoint where it must request the data.
       */
     _composeRequestUrl: function(selected) {
-      return selected == 0 ? "https://api.stackexchange.com/2.2/questions": "https://api.stackexchange.com/2.2/me/questions"
+      return "https://api.stackexchange.com/2.2/me/questions"
     },
 
     /**
@@ -519,16 +504,10 @@ Custom property | Description | Default
       * @param {string} site URL provided as parameter
       * @param {string} first_request Timestamp of the first element in the timeline.
       * @return {object} "{access_token:"value", key: "value", site: "value",
-      *                   sort:"activity", order:"desc", [tagged: "filterBy"]}"
+      *                   sort:"activity", order:"desc"}"
       */
-    _composeRefreshParams: function(access_token, key, site, filterBy, first_request){
-      var params = {access_token: access_token, key: key, site: site,
-                    sort:"activity", order:"desc",
-                    fromdate: first_request, todate: Math.ceil(new Date().getTime()/1000), pagesize:100};
-      if (filterBy){
-        params.tagged = filterBy.replace(/\s/g, ";");
-      }
-      return params;
+    _composeUserInfo: function(access_token, key, site){
+      return {access_token: access_token, key: key, site: site};
     },
 
     /**
@@ -536,18 +515,12 @@ Custom property | Description | Default
       * @param {string} access_token The user access token provide as parameter
       * @param {string} key SE key provided as parameter 
       * @param {string} site URL provided as parameter
-      * @param {string} last_request Timestamp of the last element in the timeline.
+      * @param {string} page Page of the request
       * @return {object} "{access_token:"value", key: "value", site: "value",
-      *                   sort:"activity", ord:"desc", [tagged: "filterBy"]}"
+      *                   sort:"activity", ord:"desc"}"
       */
-    _composeLoadmoreParams: function(access_token, key, site, filterBy, last_request){
-      var params = {access_token: access_token, key: key, site: site,
-                    sort:"activity", order:"desc",
-                    max: last_request};
-      if (filterBy){
-        params.tagged = filterBy.replace(/\s/g, ";");
-      }
-      return params;
+    _composeLoadmoreParams: function(access_token, key, site, page){
+      return {access_token: access_token, key: key, site: site, page:this.page};
     },
 
     /**
@@ -569,25 +542,6 @@ Custom property | Description | Default
       if (oldValue !== undefined) {
         this.$.panel.style.cursor = "wait";
         this.$.requestEvent.generateRequest();
-      }
-    },
-
-    /**
-      *  Open the search bar
-      */
-    openSearch: function(){
-      this.$.searchBar.hidden = false;
-      if (this.$.searchBar.hidden == false) {
-        this.$.searchBar.focus();
-      }
-    },
-
-    /**
-      * Close the search bar if there are no tags in the input.
-      */
-    closeSearch: function(e){
-      if (e.detail && !this.filterBy) {
-        this.$.searchBar.hidden = true;
       }
     },
 
@@ -632,11 +586,11 @@ Custom property | Description | Default
         /* Years */
         if ((current_date.getFullYear() - date.getFullYear()) != 0) {
           var dif = current_date.getFullYear() - date.getFullYear()
-          time = dif==1 ? dif + " " + this.data.year : dif + " " + this.data.years;
+          time = dif==1 ? dif + " year" : dif + " years";
           /* Months */
         } else if ((current_date.getMonth() - date.getMonth()) != 0) { 
           var dif = current_date.getMonth() - date.getMonth();
-          time = dif==1 ? dif + " " + this.data.month : dif + " " + this.data.months;
+          time = dif==1 ? dif + " month" : dif + " months";
           /* Days */
         } else if((current_date.getDate() - date.getDate()) == 0 ){
           if((current_date.getHours() - date.getHours()) == 0 ){
