@@ -23,6 +23,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </exchange-timeline>
 
     <script>
+      document.addEventListener('WebComponentsReady', function(){
+        setTimeout(function(){
+
+
+          var inicio = new Date();
+          var title = 0;
+          var custom_tag = 0;
+          var constructors = [];
+          var all_elements = document.getElementsByTagName('*');
+          for(var i=0;i<all_elements.length;i++){
+            var name = all_elements[i].tagName
+            var constructor = document.createElement(name).constructor.toString();
+            if (! constructor.match(/^function\sHTML[\w]*\s*\(/)){
+              custom_tag++;
+              constructor = constructor.substr('function '.length);
+              constructor = constructor.substr(0, constructor.indexOf('('));
+              constructors.push(constructor);
+            } else {
+              title += all_elements[i].getAttribute('title')? 1:0;
+            }
+          }
+          var fin = new Date();
+          console.log("Tiempo de Ejecucion: " + (fin.getTime()-inicio.getTime()));
+          console.log("Longitud: " + all_elements.length)
+          console.log("Elementos que cumplen: " + title)
+          console.log("Elementos custom: " + custom_tag)
+          console.log("Elementos encontrados", constructors);
+        },2000);
+      })
     </script>
 
   </body>
