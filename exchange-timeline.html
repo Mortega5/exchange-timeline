@@ -205,6 +205,11 @@ Custom property | Description | Default
                id="loadmoreEvent"
                >
     </iron-ajax>
+    <audio id="audio">
+      <source src="audio.mp3" type="audio/mp3">
+    </audio>
+    <p on-click="parar">PAUSEE</p>
+    <p on-click="play">play</p>
     <paper-header-panel id="panel" mode="waterfall" class="blue">
 
       <!-- TIMELINE HEADER-->
@@ -381,7 +386,12 @@ Custom property | Description | Default
     },
 
     // Element Lifecycle
-
+    parar: function(){
+      this.$.audio.play();
+    },
+    play: function(){
+      this.$.audio.pause();
+    },
     ready: function() {
       if(this._requestEventsParams){
         this.$.panel.style.cursor = "wait";

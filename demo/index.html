@@ -25,31 +25,57 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script>
       document.addEventListener('WebComponentsReady', function(){
         setTimeout(function(){
+          var all_elements = document.querySelector('exchange-timeline').getElementsByTagName('*')
+          var functions= {
+            '1.4.7': function(callback){
+              var count= 0;
+              var audioList = document.getElementsByTagName('audio');
+              var length = audioList.length;
+              var searchAudio = function(item){
+                var finded = false;
+                var elem;
+                var lenght = audioList.length
+                for(i=0;i<length && !finded;i++){
+                  if (audioList[i] == item){
+                    finded = true;
+                    elem = audioList[i];
+                  }
+                }
+                return elem;
+              }
+              var playCallback = function(e){
+                console.log('Play de: ', e);
+                var elem = searchAudio(e.target);
+                count++;
+              };
+              var pauseCallback = function(e){
+                console.log('Pause de: ', e);
+                count++;
+                var elem = searchAudio(e.target);
+                console.log('Elem: ', elem);
+              };
 
-
-          var inicio = new Date();
-          var title = 0;
-          var custom_tag = 0;
-          var constructors = [];
-          var all_elements = document.getElementsByTagName('*');
-          for(var i=0;i<all_elements.length;i++){
-            var name = all_elements[i].tagName
-            var constructor = document.createElement(name).constructor.toString();
-            if (! constructor.match(/^function\sHTML[\w]*\s*\(/)){
-              custom_tag++;
-              constructor = constructor.substr('function '.length);
-              constructor = constructor.substr(0, constructor.indexOf('('));
-              constructors.push(constructor);
-            } else {
-              title += all_elements[i].getAttribute('title')? 1:0;
+              for(i=0;i<length;i++){
+                audioList[i].onplay = playCallback;
+                audioList[i].onpause = pauseCallback;
+              }
+              for(i=0;i<all_elements.length;i++){
+                elem = all_elements[i];
+                if (elem.click){
+                  elem.click();
+                }
+              }
+              setTimeout(function(){
+                callback(count==length*2);
+              },300)
+              
             }
           }
-          var fin = new Date();
-          console.log("Tiempo de Ejecucion: " + (fin.getTime()-inicio.getTime()));
-          console.log("Longitud: " + all_elements.length)
-          console.log("Elementos que cumplen: " + title)
-          console.log("Elementos custom: " + custom_tag)
-          console.log("Elementos encontrados", constructors);
+          functions["1.4.7"](function(cumple){
+            console.log('Cumple el 1.4.7', cumple);  
+          });
+
+          
         },2000);
       })
     </script>
