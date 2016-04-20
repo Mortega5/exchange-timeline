@@ -28,54 +28,67 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var all_elements = document.querySelector('exchange-timeline').getElementsByTagName('*')
           var functions= {
             '1.4.7': function(callback){
-              var count= 0;
               var audioList = document.getElementsByTagName('audio');
-              var length = audioList.length;
-              var searchAudio = function(item){
+              var copyList = [];
+
+              var search = function(list, item){
                 var finded = false;
+                var i=-1;
                 var elem;
-                var lenght = audioList.length
-                for(i=0;i<length && !finded;i++){
-                  if (audioList[i] == item){
+                for(i=0;i<list.length && !finded;i++){
+                  if (list[i] == item){
                     finded = true;
-                    elem = audioList[i];
+                    elem = list[i];
                   }
                 }
-                return elem;
+                return --i;
               }
               var playCallback = function(e){
-                console.log('Play de: ', e);
-                var elem = searchAudio(e.target);
-                count++;
-              };
+                var elem = e.target;
+                elem.setAttribute('data-count-play',1);
+                var index = search(audioList, elem)
+                if (index>-1 && audioList[index].getAttribute('data-count-pause') == 1){
+                  var position = search(copyList, index)
+                  if ( position >-1){
+                    copyList.splice(position, 1);
+                  }
+                }
+              }.bind(this);
               var pauseCallback = function(e){
-                console.log('Pause de: ', e);
-                count++;
-                var elem = searchAudio(e.target);
-                console.log('Elem: ', elem);
-              };
+                var elem = e.target;
+                elem.setAttribute('data-count-pause',1);
+                var index = search(audioList, elem)
+                if (index>-1 && audioList[index].getAttribute('data-count-pause') == 1){
+                  var position = search(copyList, index)
+                  if ( position >-1){
+                    copyList.splice(position, 1);
+                  }
+                }
+              }.bind(this);
 
-              for(i=0;i<length;i++){
+              for(i=0;i<audioList.length;i++){
                 audioList[i].onplay = playCallback;
                 audioList[i].onpause = pauseCallback;
+                copyList.push(i);
               }
-              for(i=0;i<all_elements.length;i++){
-                elem = all_elements[i];
-                if (elem.click){
+
+              for(i=0;i<all_elements.length*2 && audioList.length > 0;i++){
+                elem = all_elements[i%all_elements.length];
+                if (elem.click && elem.tagName != 'A'){
                   elem.click();
                 }
               }
               setTimeout(function(){
-                callback(count==length*2);
+                callback(copyList.length == 0);
               },300)
-              
+
             }
           }
           functions["1.4.7"](function(cumple){
             console.log('Cumple el 1.4.7', cumple);  
           });
 
-          
+
         },2000);
       })
     </script>
