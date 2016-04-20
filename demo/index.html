@@ -29,8 +29,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var functions= {
             '1.4.7': function(callback){
               var audioList = document.getElementsByTagName('audio');
-              var copyList = [];
-
+              var avoid_override = [];
               var search = function(list, item){
                 var finded = false;
                 var i=-1;
@@ -46,30 +45,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               var playCallback = function(e){
                 var elem = e.target;
                 elem.setAttribute('data-count-play',1);
-                var index = search(audioList, elem)
-                if (index>-1 && audioList[index].getAttribute('data-count-pause') == 1){
-                  var position = search(copyList, index)
-                  if ( position >-1){
-                    copyList.splice(position, 1);
-                  }
-                }
-              }.bind(this);
+               }.bind(this);
               var pauseCallback = function(e){
                 var elem = e.target;
                 elem.setAttribute('data-count-pause',1);
-                var index = search(audioList, elem)
-                if (index>-1 && audioList[index].getAttribute('data-count-pause') == 1){
-                  var position = search(copyList, index)
-                  if ( position >-1){
-                    copyList.splice(position, 1);
-                  }
-                }
               }.bind(this);
 
               for(i=0;i<audioList.length;i++){
+                avoid_override.push({onplay:audioList[i].onplay,onpause:audioList[i].onpause});
                 audioList[i].onplay = playCallback;
                 audioList[i].onpause = pauseCallback;
-                copyList.push(i);
               }
 
               for(i=0;i<all_elements.length*2 && audioList.length > 0;i++){
@@ -79,17 +64,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
               }
               setTimeout(function(){
-                callback(copyList.length == 0);
-              },300)
+                var pass = true;
+                for(i=0;i<audioList.length;i++){
+                  audioList[i].onplay = avoid_override[i].onplay;
+                  audioList[i].onpause = avoid_override[i].onplay;
+                  var twoParam = audioList[i].getAttribute('data-count-play') == '1' && audioList[i].getAttribute('data-count-pause') == '1';
+                  pass = twoParam && pass;
+                }
+                callback(pass);
+              },0)
 
             }
           }
+          var start = new Date();
           functions["1.4.7"](function(cumple){
             console.log('Cumple el 1.4.7', cumple);  
+            console.log('Tiempo ejecucion: ', new Date() - start);
           });
 
 
-        },2000);
+        },500);
       })
     </script>
 

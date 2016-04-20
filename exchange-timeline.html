@@ -208,8 +208,22 @@ Custom property | Description | Default
     <audio id="audio">
       <source src="audio.mp3" type="audio/mp3">
     </audio>
-    <p id="pause" on-click="play">play</p>
-    <p id="play" on-click="parar">PAUSEE</p>
+    <p id="play" on-click="parar" data-id="audio">PAUSEE</p>
+    <p id="pause" on-click="play" data-id="audio">play</p>
+
+    <audio id="audio2">
+      <source src="audio.mp3" type="audio/mp3">
+    </audio>
+    <p id="play" on-click="parar" data-id="audio2">PAUSEE</p>
+    <p id="pause" on-click="play" data-id="audio2">play</p>
+
+    <audio id="audio3">
+      <source src="audio.mp3" type="audio/mp3">
+    </audio>
+    <p id="play" on-click="parar" data-id="audio3">PAUSEE</p>
+    <p id="pause" on-click="play" data-id="audio3">play</p>
+
+
     <paper-header-panel id="panel" mode="waterfall" class="blue">
 
       <!-- TIMELINE HEADER-->
@@ -386,11 +400,13 @@ Custom property | Description | Default
     },
 
     // Element Lifecycle
-    parar: function(){
-      this.$.audio.play();
+    parar: function(e){
+      var id = e.target.getAttribute('data-id');
+      this.$[id].play();
     },
-    play: function(){
-      this.$.audio.pause();
+    play: function(e){
+      var id = e.target.getAttribute('data-id');
+      this.$[id].pause();
     },
     ready: function() {
       if(this._requestEventsParams){
