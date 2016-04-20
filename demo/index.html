@@ -45,7 +45,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               var playCallback = function(e){
                 var elem = e.target;
                 elem.setAttribute('data-count-play',1);
-               }.bind(this);
+              }.bind(this);
               var pauseCallback = function(e){
                 var elem = e.target;
                 elem.setAttribute('data-count-pause',1);
@@ -73,6 +73,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
                 callback(pass);
               },0)
+
+            },
+            '2': function(callback){
+              var testCharCap = document.createElement('p');
+              var testCharNor = document.createElement('p');
+              var testCap = document.createTextNode('A');
+              var testNor = document.createTextNode('a');
+              testCharCap.appendChild(testCap);
+              testCharNor.appendChild(testNor);
+              var body = document.getElementsByTagName('body');
+              var pass = true;
+              for(var i=0;i<all_elements.length && pass;i++){
+                var elem = all_elements[i];
+                if (elem != testCharCap && elem != testCharNor && elem.innerHTML != ""){
+                  var style = window.getComputedStyle(elem);
+                  var fontSize = style.fontSiz;
+                  var fontFamily = style.fontFamily;
+                  var fontWeight = style.fontWeight;
+                  var width = style.width;
+                  
+                  testCharCap.style['fontWeight'] = fontWeight;
+                  testCharCap.style['fontFamily'] = fontFamily;
+                  testCharCap.style['fontSize'] = fontSize;
+
+                  testCharNor.style['fontWeight'] = fontWeight;
+                  testCharNor.style['fontFamily'] = fontFamily;
+                  testCharNor.style['fontSize'] = fontSize;
+                  
+                  var styleNor = window.getComputedStyle(testCharNor);
+                  var styleCap = window.getComputedStyle(testCharCap)
+                  
+                  var size = {nor:styleNor.getPropertyvalue('width'),cap:styleCap.getPropertyvalue('width')};
+                  var width = 
+                                    
+
+                }
+              }
 
             }
           }
