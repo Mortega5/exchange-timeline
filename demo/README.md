@@ -46,10 +46,10 @@ Una vez que se obtienen todos los elementos se realizan las métricas.
   Linea (60 a 64)
   
   Una vez establecido todo esto, se estable un setTimeout para recoger todos los callback de los elementos y se va guardando su etado en una variable
-  En caso de no tener los dos estados activados a 1 por la función de callback, significa que los elementos no han sido pausados o no se han "Playado"
-  
-  
-    * *2*
+  En caso de no tener los dos estados activados a 1 por la función de callback, significa que los elementos no han sido pausados o no se han ejecutado (play)
+
+  * 2
+    
   Esta métrica se encuentra en desarrollo, pero se basa en medir el ancho con de un caracter con las mismas caracteristicas de un texto encontrado (tamaño, estilo y el ancho de la linea)
   Una vez que tenemos el ancho de un caracter con la mismas caracteristicas basta con multiplar por 80 (medida que establece la metrica)
   y ver si tiene más o menos dimension que el texto a medir.
